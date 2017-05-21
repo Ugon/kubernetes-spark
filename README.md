@@ -85,7 +85,7 @@ curl https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/spa
 curl https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/spark/spark-worker-controller.yaml -o spark-worker-controller.yaml
 ```
 
-2. Modify spark-master-service.yaml - add `type: NodePort` in `spec` section. 
+<!-- 2. Modify spark-master-service.yaml - add `type: NodePort` in `spec` section. 
 Services of NodePort type are accessible from outside K8s cluster under every K8s nodes IPs and port selected by K8s.
 ```
 kind: Service
@@ -103,21 +103,22 @@ spec:
       name: http
   selector:
     component: spark-master
-```
+``` -->
 
-3. Start spark-master node.
+2. Start spark-master node.
 ```
 kubectl create -f spark-master-controller.yaml
 kubectl create -f spark-master-service.yaml
 ```
 
-4. Start spark-worker nodes. To select how many workers should be stared, modify `replicas: 2` in spark-worker-controller.yaml.
+3. Start spark-worker nodes. To select how many workers should be stared, modify `replicas: 2` in spark-worker-controller.yaml.
 ```
 kubectl create -f spark-worker-controller.yaml
 ```
 To check if they are working, run `kubectl get pods`. You can also check this in spark web ui.
 
-5. Find out what ports on K8s nodes was assigned to spark. On all K8s nodes those ports will be the same.
+<!--
+4. Find out what ports on K8s nodes was assigned to spark. On all K8s nodes those ports will be the same.
 ```
 kubectl get svc spark-master
 NAME           CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGE
@@ -125,3 +126,35 @@ spark-master   10.108.103.225   <nodes>       7077:31585/TCP,8080:32693/TCP   2m
 ```
 In this example K8s selected `7077:31585/TCP,8080:32693/TCP` ports, which means that Spark is available on 31585 and Spark Web UI is available on 32693 port.
 To access those services you can use any of your K8s nodes' IP address.
+-->
+
+4. Spark operates in internal kubernetes network. To gain access to fully functional Spark UI a connection with this network is required.
+To achieve this we recommend connecting your workstation to that k8s network using `weave` (network overlay which is used by k8s).
+
+```
+sudo curl -L git.io/weave -o /usr/local/bin/weave
+sudo chmod a+x /usr/local/bin/weave
+sudo weave launch
+sudo weave connect <NODE_IP>
+sudo weave expose
+```
+`<NODE_IP>` is ip address of any node running k8s.
+
+5. To display Spark UI first find out Spark master pod id and then its ip address inside k8s network.
+```
+kubectl get pods
+kubectl describe spark-master-controller-<ID>
+```
+In web browser go to `<ip>:8080`.
+
+## Submitting jobs to Spark running in Kubernetes cluster
+1. Package your code in a `.jar`
+```
+sbt package
+```
+
+2. Use `submit.sh` 
+```
+submit.sh spark-master-controller-<ID> <JAR_LOCATION>
+```
+`<ID>` is Spark master pod id obtained in previous step.
