@@ -74,7 +74,7 @@ kubectl get pods --all-namespaces
 10. On all minion VMs run `kubeadm join` command that you took note of in step 4. This will connect your nodes to K8s mater node and form a cluster.
 You can confirm that nodes joined cluster by running `kubectl get nodes` command. After a minute or so all nodes should be have `RUNNING` status.
 
-Your cluster is not up and running, you can close all your shh connections (apart from master node if you are not configuring it from remote host).
+Your cluster is now up and running, you can close all your shh connections (apart from master node if you are not configuring it from remote host).
 
 ## Deploying Apache Spark on Kubernetes cluster
 
@@ -143,9 +143,31 @@ sudo weave expose
 5. To display Spark UI first find out Spark master pod id and then its ip address inside k8s network.
 ```
 kubectl get pods
-kubectl describe spark-master-controller-<ID>
+kubectl describe pod spark-master-controller-<ID>
 ```
 In web browser go to `<ip>:8080`.
+
+## Installing and using Zeppelin UI
+1. Download configuration files from K8s Spark example: 
+```
+curl https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/spark/zeppelin-controller.yaml -o zeppelin-controller.yaml
+curl https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/spark/zeppelin-service.yaml -o zeppelin-service.yaml
+```
+2. Start ZeppelinUI controller and service
+```
+kubectl create -f zeppelin-controller.yaml
+kubectl create -f zeppelin-service.yaml
+```
+3. Check if ZeppelinUi is running
+```
+kubectl get pods
+```
+
+4. To display and use ZeppelinUI first find out its id and then its ip address inside k8s network. Use that IP to access it.
+```
+kubectl get pods
+kubectl describe pod zeppelin-controller-<ID>
+```
 
 ## Submitting jobs to Spark running in Kubernetes cluster
 1. Package your code in a `.jar`
@@ -155,6 +177,6 @@ sbt package
 
 2. Use `submit.sh` 
 ```
-submit.sh spark-master-controller-<ID> <JAR_LOCATION>
+submit.sh spark-master-controller-<ID> <JAR_LOCATION> <JOB_ARGUMENTS>
 ```
 `<ID>` is Spark master pod id obtained in previous step.
