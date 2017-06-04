@@ -1,6 +1,8 @@
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.graphx.{GraphLoader, PartitionStrategy}
 
+import scala.io.Source
+
 /**
   * @author Wojciech Pachuta
   * @author Bartłomiej Grochal
@@ -8,6 +10,7 @@ import org.apache.spark.graphx.{GraphLoader, PartitionStrategy}
 object Main {
 
   def main(args: Array[String]): Unit = {
+
     /* Creating a Spark Context - the entry point for Spark. */
     val sparkConfiguration = new SparkConf()
       .setAppName("Triangle Counting")
@@ -29,6 +32,7 @@ object Main {
 
     /* Finishing. */
     sparkContext.stop()
+
   }
 
 }
