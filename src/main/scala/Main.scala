@@ -1,5 +1,7 @@
 import org.apache.spark.{SparkConf, SparkContext}
 
+import scala.io.Source
+
 /**
   * @author Wojciech Pachuta.
   */
@@ -13,6 +15,8 @@ object Main {
     println("******************************************************************************************")
     println(s"args:")
     println(args.mkString(" "))
+    Source.fromInputStream(getClass.getResourceAsStream("data.csv")).getLines().foreach(println(_))
+    println(s"from file:")
     println("******************************************************************************************")
     println("******************************************************************************************")
 
