@@ -180,3 +180,15 @@ sbt package
 submit.sh spark-master-controller-<ID> <JAR_LOCATION> <JOB_ARGUMENTS>
 ```
 `<ID>` is Spark master pod id obtained in previous step.
+
+## Sample application
+This project contains the sample Apache Spark application built on top of the [GraphX library](http://spark.apache.org/graphx/). The
+application counts the number of triangles in a directed graph passing through each node of this graph. A vertex is a part of a triangle
+when it has two adjacent vertices with an edge between them.
+
+The input file comes from the [Stanford Large Network Dataset Collection](https://snap.stanford.edu) and is the [collaboration network of
+Arxiv High Energy Physics Theory](https://snap.stanford.edu/data/ca-HepTh.html). This network consists of 9'877 nodes and 25'998 edges.
+The detailed description of this network is available under the above link. The graph file consits of two columns - the first one is the
+ID of a researcher, who co-authored a paper with a researcher having the ID placed in the second column. If a paper is co-authored by more
+than one researcher, this authors generate a completely connected clique.
+
