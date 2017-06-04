@@ -1,40 +1,35 @@
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.graphx.{GraphLoader, PartitionStrategy}
 
 /**
-  * @author Wojciech Pachuta.
+  * @author Wojciech Pachuta
+  * @author Bartłomiej Grochal
   */
 object Main {
 
-  val NumberOfSamples: Int = 1000000
-
   def main(args: Array[String]): Unit = {
-    val conf = new SparkConf().setAppName("Spark Pi")
-    println("******************************************************************************************")
-    println("******************************************************************************************")
-    println(s"args:")
-    println(args.mkString(" "))
-    println("******************************************************************************************")
-    println("******************************************************************************************")
+    /* Creating a Spark Context - the entry point for Spark. */
+    val sparkConfiguration = new SparkConf()
+      .setAppName("Triangle Counting")
+    val sparkContext = new SparkContext(sparkConfiguration)
 
-    println("******************************************************************************************")
-    println("******************************************************************************************")
-    println(s"from internet:")
-    println(scala.io.Source.fromURL("http://www.agh.edu.pl").mkString)
-    println("******************************************************************************************")
-    println("******************************************************************************************")
+    /* Loading a contribution graph from the file. */
+    val contributionGraph = GraphLoader
+      .edgeListFile(sparkContext, "src/main/resources/data/collaborations.txt", true)
+      .partitionBy(PartitionStrategy.RandomVertexCut)
 
-    val sc = new SparkContext(conf)
-    val count = sc.parallelize(1 to NumberOfSamples).filter { _ =>
-      val x = math.random
-      val y = math.random
-      x * x + y * y < 1
-    }.count()
-    println("******************************************************************************************")
-    println("******************************************************************************************")
-    println(s"Pi is roughly ${4.0 * count / NumberOfSamples}")
-    println("******************************************************************************************")
-    println("******************************************************************************************")
-    sc.stop()
+    /* Computing the number of triangles passing through each vertex. */
+    val trianglesCount = contributionGraph.triangleCount().vertices
+
+    /* Printing the results. */
+    println(trianglesCount.collect      // Getting the mapping: UserID -> triangles count
+      .sortWith(_._2 < _._2)		// Sorting increasingly by the values
+      .filter(_._2 > 0)			// Filtering only non-zero results
+      .mkString("\n"))			// Printing each pair in the new line
+
+    /* Finishing. */
+    sparkContext.stop()
   }
 
 }
+
