@@ -85,26 +85,6 @@ curl https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/spa
 curl https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/spark/spark-worker-controller.yaml -o spark-worker-controller.yaml
 ```
 
-<!-- 2. Modify spark-master-service.yaml - add `type: NodePort` in `spec` section. 
-Services of NodePort type are accessible from outside K8s cluster under every K8s nodes IPs and port selected by K8s.
-```
-kind: Service
-apiVersion: v1
-metadata:
-  name: spark-master
-spec:
-  type: NodePort
-  ports:
-    - port: 7077
-      targetPort: 7077
-      name: spark
-    - port: 8080
-      targetPort: 8080
-      name: http
-  selector:
-    component: spark-master
-``` -->
-
 2. Start spark-master node.
 ```
 kubectl create -f spark-master-controller.yaml
@@ -116,17 +96,6 @@ kubectl create -f spark-master-service.yaml
 kubectl create -f spark-worker-controller.yaml
 ```
 To check if they are working, run `kubectl get pods`. You can also check this in spark web ui.
-
-<!--
-4. Find out what ports on K8s nodes was assigned to spark. On all K8s nodes those ports will be the same.
-```
-kubectl get svc spark-master
-NAME           CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGE
-spark-master   10.108.103.225   <nodes>       7077:31585/TCP,8080:32693/TCP   2m
-```
-In this example K8s selected `7077:31585/TCP,8080:32693/TCP` ports, which means that Spark is available on 31585 and Spark Web UI is available on 32693 port.
-To access those services you can use any of your K8s nodes' IP address.
--->
 
 4. Spark operates in internal kubernetes network. To gain access to fully functional Spark UI a connection with this network is required.
 To achieve this we recommend connecting your workstation to that k8s network using `weave` (network overlay which is used by k8s).
@@ -163,10 +132,42 @@ kubectl create -f zeppelin-service.yaml
 kubectl get pods
 ```
 
-4. To display and use ZeppelinUI first find out its id and then its ip address inside k8s network. Use that IP to access it.
+4. ZeppelinUI service runs in K8s in NodePort mode. This means that it is available on all K8s nodes' public IPs (virtual machine, not K8s internal) on a port determined by K8s (same port on every IP). 
+To find out what that port is use:
 ```
-kubectl get pods
-kubectl describe pod zeppelin-controller-<ID>
+kubectl get svc zeppelin
+NAME       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+zeppelin   10.97.252.171   <pending>     80:32627/TCP   3d
+```
+In this example the port is 32627.
+
+5. ZeppelinUI can take jobs written in Scala or Python. To create a job first create a Note (multiple concurrent Notes are allowed), write in it your job and press Shift+Enter to run it.
+
+Python example:
+```
+%pyspark
+import random
+
+NUM_SAMPLES = 50000000
+def inside(p):
+    x, y = random.random(), random.random()
+    return x*x + y*y < 1
+
+count = sc.parallelize(xrange(0, NUM_SAMPLES)) \
+             .filter(inside).count()
+print "Pi is roughly %f" % (4.0 * count / NUM_SAMPLES)
+```
+
+Scala example:
+```
+%spark
+val NumSamples = 50000000
+val count = sc.parallelize(1 to NumSamples).filter { _ =>
+  val x = math.random
+  val y = math.random
+  x*x + y*y < 1
+}.count()
+println(s"Pi is roughly ${4.0 * count / NumSamples}")
 ```
 
 ## Submitting jobs to Spark running in Kubernetes cluster
@@ -177,9 +178,8 @@ sbt package
 
 2. Use `submit.sh` 
 ```
-submit.sh spark-master-controller-<ID> <JAR_LOCATION> <JOB_ARGUMENTS>
+submit.sh <JAR_LOCATION> <DATA_FILE_LOCATION> <JOB_ARGUMENTS>
 ```
-`<ID>` is Spark master pod id obtained in previous step.
 
 ## Sample application
 This project contains the sample Apache Spark application built on top of the [GraphX library](http://spark.apache.org/graphx/). The
