@@ -10,7 +10,10 @@ https://github.com/kubernetes/kubernetes/tree/master/examples/spark
 To deploy a K8s cluster you need at least two nodes (you can successfully deploy and use K8s on one node, but that's not a cluster). 
 This guide uses 4 VirtualBox virtual machines running Ubuntu 16.04 Server as K8s nodes (1 for K8s master and 3 for minions).
 
-1. Create 4 VMs and install Ubuntu 16.04 Serve OS on all of them.
+1. Create 4 VMs and install Ubuntu 16.04 Serve OS on all of them. Please note that this guide is specific to Ubuntu distribution. If
+you want to use another LINUX/UNIX distribution, it may be necessary to use some different commands than presented in this tutorial
+(e.g. there are some issues related to the Docker installation with the Debian-Jessie distribution). While creating the VMs please
+also take into account that each VM should have different host name.
 2. Login to all of them as root (use ssh for convenience).
 3. Install Docker and K8s on all VMs.
 ```
@@ -23,7 +26,12 @@ apt-get update
 apt-get install -y docker-engine
 apt-get install -y kubelet kubeadm kubectl kubernetes-cni
 ```
-
+Please note that the `docker0` interface is configured by default during the Docker installation in the network addressed by: 
+`172.17.0.0/16`. This may cause problems when the Ubuntu VMs are placed in the same network. To workaround this issue, remove the
+`docker0` entry in the routing table by typing:
+```
+sudo ip route del 172.17.0.0/16 dev docker0
+```
 4. On master node run:
 ```
 kubeadm init
