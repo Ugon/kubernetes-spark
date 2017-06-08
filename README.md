@@ -140,8 +140,8 @@ kubectl create -f zeppelin-service.yaml
 kubectl get pods
 ```
 
-4. ZeppelinUI service runs in K8s in NodePort mode. This means that it is available on all K8s nodes' public IPs (virtual machine, not K8s internal) on a port determined by K8s (same port on every IP). 
-To find out what that port is use:
+4. ZeppelinUI service runs in K8s in NodePort mode. Therefore the ZeppelinUI is available via the public IP of the K8s node hosting
+the zeppelin service, on a port determined by K8s. To find out what that port is use:
 ```
 kubectl get svc zeppelin
 NAME       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
